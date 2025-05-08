@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
+import Author from "../models/author.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import logger from "../utils/logger.js";
@@ -17,7 +17,7 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
   let decodedToken;
   try {
     decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    logger.info(`JWT decoded for user ID: ${decodedToken?._id}`);
+    logger.info(`JWT decoded for Author ID: ${decodedToken?._id}`);
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       logger.warn("JWT expired");
@@ -31,36 +31,36 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     }
   }
 
-  const user = await User.findById(decodedToken?._id).select(
+  const author = await Author.findById(decodedToken?._id).select(
     "-password -refreshToken -verificationToken -verificationTokenExpires -passwordResetToken -passwordResetExpires"
   );
 
-  if (!user) {
-    logger.warn(`JWT valid but user not found: ${decodedToken?._id}`);
-    throw new ApiError(401, "Unauthorized - User not found");
+  if (!author) {
+    logger.warn(`JWT valid but author not found: ${decodedToken?._id}`);
+    throw new ApiError(401, "Unauthorized - Author not found");
   }
 
-  if (user.isDeleted) {
-    logger.warn(`Access denied: Deleted user ${user._id}`);
+  if (author.isDeleted) {
+    logger.warn(`Access denied: Deleted author ${author._id}`);
     throw new ApiError(401, "Unauthorized - Account has been deleted");
   }
 
-  if (user.status === "Blocked") {
-    logger.warn(`Access denied: Blocked user ${user._id}`);
+  if (author.status === "Blocked") {
+    logger.warn(`Access denied: Blocked author ${author._id}`);
     throw new ApiError(403, "Forbidden - Account is blocked");
   }
 
-  if (user.status === "Pending") {
-    logger.warn(`Access denied: Pending user ${user._id}`);
+  if (author.status === "Pending") {
+    logger.warn(`Access denied: Pending author ${author._id}`);
     throw new ApiError(403, "Forbidden - Account is pending verification");
   }
 
-  if (typeof user.changedPasswordAfter === "function" && user.changedPasswordAfter(decodedToken.iat)) {
-    logger.warn(`Access denied: User ${user._id} changed password after token issuance`);
+  if (typeof author.changedPasswordAfter === "function" && author.changedPasswordAfter(decodedToken.iat)) {
+    logger.warn(`Access denied: author ${author._id} changed password after token issuance`);
     throw new ApiError(401, "Unauthorized - Password changed recently. Please login again");
   }
 
-  req.user = user;
-  logger.info(`JWT verified and user authorized: ${user._id}`);
+  req.author = author;
+  logger.info(`JWT verified and author authorized: ${author._id}`);
   next();
 });

@@ -3,7 +3,7 @@ import * as CategoryController from "../../controllers/admin/category.controller
 import { upload } from "../../middlewares/multer.middleware.js";
 import * as categoryValidation from "../../validations/category.validation.js";
 import validate from "../../middlewares/validate.js";
-import { verifyJWT } from "../../middlewares/users.auth.middleware.js";
+import { verifyJWT } from "../../middlewares/author.auth.middleware.js";
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import User from "../../models/user.model.js";
+import Author from "../../models/author.model.js";
 import {
   uploadOnCloudinary,
   deleteFromCloudinary,
@@ -8,25 +8,25 @@ import httpStatus from "http-status";
 import logger from "../../utils/logger.js";
 
 /**
- * Create a new user
- * @param {Object} userData - User data
+ * Create a new Author
+ * @param {Object} authorData - Author data
  * @param {Object} imagePaths - Paths for avatar and cover images
- * @returns {Promise<Object>} Created user
+ * @returns {Promise<Object>} Created Author
  */
-const createUser = async (userData, avatarImg, coverImg) => {
-  const { email, phone } = userData;
+const createAuthor = async (authorData, avatarImg, coverImg) => {
+  const { email, phone } = authorData;
 
-  logger.info(`Creating new user: ${email}`);
+  logger.info(`Creating new author: ${email}`);
 
-  const existingUser = await User.findOne({
+  const existingAuthor = await Author.findOne({
     $or: [{ email }, { phone }],
     isDeleted: { $ne: true },
   });
 
-  if (existingUser) {
+  if (existingAuthor) {
     throw new ApiError(
       httpStatus.CONFLICT,
-      "User with this email or phone already exists"
+      "Author with this email or phone already exists"
     );
   }
 
@@ -50,20 +50,20 @@ const createUser = async (userData, avatarImg, coverImg) => {
     coverImageUrl = coverImage.url;
   }
 
-  const newUser = await User.create({
-    ...userData,
+  const newAuthor = await Author.create({
+    ...authorData,
     avatar: avatarUrl,
     coverImage: coverImageUrl,
   });
 
-  logger.info(`User created: ${newUser._id}`);
-  return newUser;
+  logger.info(`Author created: ${newAuthor._id}`);
+  return newAuthor;
 };
 
 /**
- * Get all users with filtering
+ * Get all Author with filtering
  */
-const getAllUsers = async (filters) => {
+const getAllAuthors = async (filters) => {
   const {
     search,
     role,
@@ -90,13 +90,13 @@ const getAllUsers = async (filters) => {
   const skip = (page - 1) * limit;
   const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
 
-  const [users, total] = await Promise.all([
-    User.find(query).sort(sort).skip(skip).limit(limit),
-    User.countDocuments(query),
+  const [authors, total] = await Promise.all([
+    Author.find(query).sort(sort).skip(skip).limit(limit),
+    Author.countDocuments(query),
   ]);
 
   return {
-    users,
+    authors,
     pagination: {
       total,
       page: parseInt(page),
@@ -107,22 +107,22 @@ const getAllUsers = async (filters) => {
 };
 
 /**
- * Get user by ID
+ * Get Author by ID
  */
-const getUserById = async (id) => {
-  const user = await User.findOne({ _id: id, isDeleted: { $ne: true } });
-  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  return user;
+const getAuthorById = async (id) => {
+  const author = await Author.findOne({ _id: id, isDeleted: { $ne: true } });
+  if (!author) throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
+  return author;
 };
 
 /**
- * Update user
+ * Update Author
  */
 
-const updateUserById = async (id, updateData, avatarImg, coverImg) => {
-  const user = await User.findOne({ _id: id, isDeleted: { $ne: true } });
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+const updateAuthorById = async (id, updateData, avatarImg, coverImg) => {
+  const author = await Author.findOne({ _id: id, isDeleted: { $ne: true } });
+  if (!author) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
   }
 
   // Upload and update avatar if provided
@@ -134,11 +134,11 @@ const updateUserById = async (id, updateData, avatarImg, coverImg) => {
 
     // Delete previous avatar from Cloudinary
 
-    if (user.avatar) {
+    if (author.avatar) {
       try {
-        await deleteFromCloudinary(user.avatar);
+        await deleteFromCloudinary(author.avatar);
         logger.info(
-          `Old image deleted from Cloudinary for category: ${user.avatar}`
+          `Old image deleted from Cloudinary for category: ${author.avatar}`
         );
       } catch (error) {
         logger.error(
@@ -163,11 +163,11 @@ const updateUserById = async (id, updateData, avatarImg, coverImg) => {
 
     // Delete previous coverImage from Cloudinary
 
-    if (user.coverImage) {
+    if (author.coverImage) {
       try {
-        await deleteFromCloudinary(user.coverImage);
+        await deleteFromCloudinary(author.coverImage);
         logger.info(
-          `Old image deleted from Cloudinary for category: ${user.coverImage}`
+          `Old image deleted from Cloudinary for category: ${author.coverImage}`
         );
       } catch (error) {
         logger.error(
@@ -180,39 +180,39 @@ const updateUserById = async (id, updateData, avatarImg, coverImg) => {
     updateData.coverImage = uploadedCover.url;
   }
 
-  // Update user fields
-  const updatedUser = await User.findByIdAndUpdate(
+  // Update author fields
+  const updatedAuthor = await Author.findByIdAndUpdate(
     id,
     { $set: updateData },
     { new: true, runValidators: true }
   );
 
-  return updatedUser;
+  return updatedAuthor;
 };
 
 /**
- * Soft delete user
+ * Soft delete Author
  */
-const deleteUserById = async (id) => {
-  const user = await User.findOne({ _id: id, isDeleted: { $ne: true } });
-  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+const deleteAuthorById = async (id) => {
+  const author = await Author.findOne({ _id: id, isDeleted: { $ne: true } });
+  if (!author) throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
 
-  const deletedUser = await User.findByIdAndUpdate(
+  const deletedAuthor = await Author.findByIdAndUpdate(
     id,
     { isDeleted: true },
     { new: true }
   );
-  return deletedUser;
+  return deletedAuthor;
 };
 
-const generateTokens = async (user) => {
+const generateTokens = async (author) => {
   try {
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+    const accessToken = author.generateAccessToken();
+    const refreshToken = author.generateRefreshToken();
 
-    // Save refreshToken to user document
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
+    // Save refreshToken to Author document
+    author.refreshToken = refreshToken;
+    await author.save({ validateBeforeSave: false });
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -224,49 +224,49 @@ const generateTokens = async (user) => {
   }
 };
 
-const loginUser = async (email, password, deviceInfo, ipAddress) => {
+const loginAuthor = async (email, password, deviceInfo, ipAddress) => {
   logger.info(`Login attempt for email: ${email}`);
 
   try {
-    const user = await User.findByCredentials(email, password);
-    if (!user) {
+    const author = await Author.findByCredentials(email, password);
+    if (!author) {
       logger.warn(`Invalid login attempt for email: ${email}`);
       throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
-    if (!user.isActive) {
-      logger.warn(`Inactive user login attempt: ${email}`);
+    if (!author.isActive) {
+      logger.warn(`Inactive author login attempt: ${email}`);
       throw new ApiError(httpStatus.FORBIDDEN, "Account is inactive");
     }
 
-    if (!user.isVerified) {
-      logger.warn(`Unverified user login attempt: ${email}`);
+    if (!author.isVerified) {
+      logger.warn(`Unverified author login attempt: ${email}`);
       throw new ApiError(httpStatus.FORBIDDEN, "Please verify your account first");
     }
 
-    await user.recordLogin(deviceInfo, ipAddress);
+    await author.recordLogin(deviceInfo, ipAddress);
 
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+    const accessToken = author.generateAccessToken();
+    const refreshToken = author.generateRefreshToken();
 
-    user.refreshToken = refreshToken;
-    user.accessToken = accessToken;
-    await user.save();
+    author.refreshToken = refreshToken;
+    author.accessToken = accessToken;
+    await author.save();
 
-    logger.info(`User logged in successfully: ${user._id}`);
+    logger.info(`Author logged in successfully: ${author._id}`);
     return {
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        avatar: user.avatar,
-        coverImage: user.coverImage,
-        isVerified: user.isVerified,
-        isActive: user.isActive,
-        lastActive: user.lastActive,
+      author: {
+        _id: author._id,
+        firstName: author.firstName,
+        lastName: author.lastName,
+        email: author.email,
+        phone: author.phone,
+        role: author.role,
+        avatar: author.avatar,
+        coverImage: author.coverImage,
+        isVerified: author.isVerified,
+        isActive: author.isActive,
+        lastActive: author.lastActive,
       },
       tokens: {
         accessToken,
@@ -279,12 +279,12 @@ const loginUser = async (email, password, deviceInfo, ipAddress) => {
   }
 };
 
-const logoutUser = async (userId) => {
-  logger.info(`Attempting to log out user: ${userId}`);
+const logoutAuthor = async (authorId) => {
+  logger.info(`Attempting to log out author: ${authorId}`);
 
   try {
-    const user = await User.findByIdAndUpdate(
-      userId,
+    const author = await Author.findByIdAndUpdate(
+      authorId,
       {
         $unset: { refreshToken: "" },
         $set: { lastActive: new Date() },
@@ -292,25 +292,26 @@ const logoutUser = async (userId) => {
       { new: true }
     );
 
-    if (!user) {
-      logger.warn(`Logout failed: user not found with ID ${userId}`);
-      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    if (!author) {
+      logger.warn(`Logout failed: Author not found with ID ${authorId}`);
+      throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
     }
 
-    logger.info(`User logged out successfully: ${userId}`);
+    logger.info(`Author logged out successfully: ${authorId}`);
     return { success: true };
   } catch (error) {
-    logger.error(`Logout error for user ${userId}: ${error.message}`);
+    logger.error(`Logout error for Author ${authorId}: ${error.message}`);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Logout failed");
   }
 };
 
 export {
-  createUser,
-  getAllUsers,
-  getUserById,
-  updateUserById,
-  deleteUserById,
-  loginUser,
-  logoutUser,
+  createAuthor,
+  getAllAuthors,
+  getAuthorById,
+  updateAuthorById,
+  deleteAuthorById,
+  loginAuthor,
+  logoutAuthor,
+  
 };

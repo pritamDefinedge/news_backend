@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { objectId } from "./custom.validation.js";
 
-const createUser = {
+const createAuthor = {
   body: Joi.object({
     firstName: Joi.string().min(2).max(50).required().messages({
       "string.empty": "First name is required",
@@ -36,10 +36,10 @@ const createUser = {
   }),
 };
 
-const getAllUsers = {
+const getAllAuthors = {
   query: Joi.object({
     search: Joi.string().optional(),
-    role: Joi.string().valid("user", "admin", "moderator").optional(),
+    role: Joi.string().valid("author", "admin", "user").optional(),
     isActive: Joi.boolean().optional(),
     isVerified: Joi.boolean().optional(),
     page: Joi.number().min(1).default(1),
@@ -51,13 +51,13 @@ const getAllUsers = {
   }),
 };
 
-const getUserById = {
+const getAuthorById = {
   params: Joi.object({
     id: Joi.string().custom(objectId).required(),
   }),
 };
 
-const updateUserById = {
+const updateAuthorById = {
   params: Joi.object({
     id: Joi.string().custom(objectId).required(),
   }),
@@ -68,13 +68,13 @@ const updateUserById = {
     phone: Joi.string()
       .pattern(/^\+?[1-9]\d{1,14}$/)
       .optional(),
-    role: Joi.string().valid("user", "admin", "moderator").optional(),
+    role: Joi.string().valid("author", "admin", "moderator").optional(),
     isVerified: Joi.boolean().optional(),
     isActive: Joi.boolean().optional()
   }).min(1), // At least one field must be provided
 };
 
-const deleteUserById = {
+const deleteAuthorById = {
   params: Joi.object({
     id: Joi.string().custom(objectId).required(),
   }),
@@ -93,4 +93,4 @@ const loginValidation = {
   }),
 };
 
-export { createUser, getAllUsers, getUserById, updateUserById, deleteUserById,loginValidation };
+export { createAuthor, getAllAuthors, getAuthorById, updateAuthorById, deleteAuthorById,loginValidation };

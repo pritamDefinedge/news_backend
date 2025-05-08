@@ -1,4 +1,4 @@
-import * as UserService from "../../services/admin/user.service.js";
+import * as AuthorService from "../../services/admin/author.service.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -9,12 +9,12 @@ import useragent from 'express-useragent';
 
 
 /**
- * Create a new user
- * @route POST /api/v1/admin/users
+ * Create a new AuthorService
+ * @route POST /api/v1/admin/authors
  * @access Private/Admin
  */
 
-const createUser = asyncHandler(async (req, res) => {
+const createAuthor = asyncHandler(async (req, res) => {
   const {
     firstName,
     lastName,
@@ -29,11 +29,11 @@ const createUser = asyncHandler(async (req, res) => {
   const avatar = req.files?.avatar?.[0]?.path || null;
   const coverImage = req.files?.coverImage?.[0]?.path || null;
 
-  logger.info(`Creating new user: ${email}`);
+  logger.info(`Creating new Author: ${email}`);
   logger.info(`avatar: ${avatar}`);
   logger.info(`coverImage: ${coverImage}`);
 
-  const user = await UserService.createUser(
+  const author = await AuthorService.createAuthor(
     {
       firstName,
       lastName,
@@ -48,21 +48,21 @@ const createUser = asyncHandler(async (req, res) => {
     coverImage
   );
 
-  logger.info(`User created successfully: ${user._id}`);
+  logger.info(`author created successfully: ${author._id}`);
 
   return res
     .status(httpStatus.CREATED)
     .json(
-      new ApiResponse(httpStatus.CREATED, user, "User created successfully")
+      new ApiResponse(httpStatus.CREATED, author, "author created successfully")
     );
 });
 
 /**
- * Get all users with filters & pagination
- * @route GET /api/v1/admin/users
+ * Get all Author with filters & pagination
+ * @route GET /api/v1/admin/authors
  * @access Private/Admin
  */
-const getAllUsers = asyncHandler(async (req, res) => {
+const getAllAuthors = asyncHandler(async (req, res) => {
   const {
     search,
     role,
@@ -74,9 +74,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
     sortOrder = "desc",
   } = req.query;
 
-  logger.info(`Fetching users with filters: ${JSON.stringify(req.query)}`);
+  logger.info(`Fetching Author with filters: ${JSON.stringify(req.query)}`);
 
-  const users = await UserService.getAllUsers({
+  const author = await AuthorService.getAllAuthors({
     search,
     role,
     isActive,
@@ -89,47 +89,47 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
   return res
     .status(httpStatus.OK)
-    .json(new ApiResponse(httpStatus.OK, users, "Users fetched successfully"));
+    .json(new ApiResponse(httpStatus.OK, author, "Author fetched successfully"));
 });
 
 /**
- * Get single user by ID
- * @route GET /api/v1/admin/users/:id
+ * Get single Author by ID
+ * @route GET /api/v1/admin/Author/:id
  * @access Private/Admin
  */
-const getUserById = asyncHandler(async (req, res) => {
+const getAuthorById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  logger.info(`Fetching user by ID: ${id}`);
+  logger.info(`Fetching author by ID: ${id}`);
 
   if (!validateObjectId(id)) {
-    logger.warn(`Invalid user ID: ${id}`);
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user ID");
+    logger.warn(`Invalid Author ID: ${id}`);
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Author ID");
   }
 
-  const user = await UserService.getUserById(id);
+  const author = await AuthorService.getAuthorById(id);
 
-  if (!user) {
+  if (!author) {
     logger.warn(`User not found: ${id}`);
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
   }
 
   return res
     .status(httpStatus.OK)
-    .json(new ApiResponse(httpStatus.OK, user, "User fetched successfully"));
+    .json(new ApiResponse(httpStatus.OK, author, "Author fetched successfully"));
 });
 
 /**
- * Update user by ID
- * @route PATCH /api/v1/admin/users/:id
+ * Update author by ID
+ * @route PATCH /api/v1/admin/author/:id
  * @access Private/Admin
  */
-const updateUserById = asyncHandler(async (req, res) => {
+const updateAuthorById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!validateObjectId(id)) {
-    logger.warn(`Invalid user ID: ${id}`);
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user ID");
+    logger.warn(`Invalid author ID: ${id}`);
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid author ID");
   }
 
   const updates = { ...req.body };
@@ -138,63 +138,63 @@ const updateUserById = asyncHandler(async (req, res) => {
   const avatar = req.files?.avatar?.[0]?.path || null;
   const coverImage = req.files?.coverImage?.[0]?.path || null;
 
-  logger.info(`Updating user: ${id}`);
+  logger.info(`Updating Author: ${id}`);
   logger.info(`avatar: ${avatar}`);
   logger.info(`coverImage: ${coverImage}`);
 
-  const updatedUser = await UserService.updateUserById(
+  const updatedAuthor = await AuthorService.updateAuthorById(
     id,
     updates,
     avatar,
     coverImage
   );
 
-  if (!updatedUser) {
-    logger.warn(`User not found for update: ${id}`);
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  if (!updatedAuthor) {
+    logger.warn(`Author not found for update: ${id}`);
+    throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
   }
 
-  logger.info(`User updated successfully: ${updatedUser._id}`);
+  logger.info(`Author updated successfully: ${updatedAuthor._id}`);
 
   return res
     .status(httpStatus.OK)
     .json(
-      new ApiResponse(httpStatus.OK, updatedUser, "User updated successfully")
+      new ApiResponse(httpStatus.OK, updatedAuthor, "Author updated successfully")
     );
 });
 
 /**
- * Soft delete user by ID
- * @route DELETE /api/v1/admin/users/:id
+ * Soft delete Author by ID
+ * @route DELETE /api/v1/admin/authors/:id
  * @access Private/Admin
  */
-const deleteUserById = asyncHandler(async (req, res) => {
+const deleteAuthorById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  logger.info(`Deleting user: ${id}`);
+  logger.info(`Deleting author: ${id}`);
 
   if (!validateObjectId(id)) {
-    logger.warn(`Invalid user ID: ${id}`);
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user ID");
+    logger.warn(`Invalid Author ID: ${id}`);
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Author ID");
   }
 
-  const deletedUser = await UserService.deleteUserById(id);
+  const deletedAuthor = await AuthorService.deleteAuthorById(id);
 
-  if (!deletedUser) {
-    logger.warn(`User not found for deletion: ${id}`);
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  if (!deletedAuthor) {
+    logger.warn(`Author not found for deletion: ${id}`);
+    throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
   }
 
   return res
     .status(httpStatus.OK)
     .json(
-      new ApiResponse(httpStatus.OK, deletedUser, "User deleted successfully")
+      new ApiResponse(httpStatus.OK, deletedAuthor, "Author deleted successfully")
     );
 });
 
 /**
- * Login user by email and password
- * @route DELETE /api/v1/admin/users/login
+ * Login Author by email and password
+ * @route DELETE /api/v1/admin/author/login
  * @access Public/Admin
  */
 const login = asyncHandler(async (req, res) => {
@@ -206,7 +206,7 @@ const login = asyncHandler(async (req, res) => {
   logger.debug(`Device info: ${JSON.stringify(deviceInfo)} | IP: ${ipAddress}`);
 
   try {
-    const result = await UserService.loginUser(email, password, deviceInfo, ipAddress);
+    const result = await AuthorService.loginAuthor(email, password, deviceInfo, ipAddress);
 
     // Set refreshToken as HTTP-only cookie
     res.cookie("refreshToken", result.tokens.refreshToken, {
@@ -216,14 +216,14 @@ const login = asyncHandler(async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    logger.info(`Login successful for user: ${result.user._id}`);
+    logger.info(`Login successful for Author: ${result.author._id}`);
 
     return res
       .status(httpStatus.OK)
       .json(
         new ApiResponse(
           httpStatus.OK,
-          { user: result.user, accessToken: result.tokens.accessToken,refreshToken: result.tokens.refreshToken },
+          { author: result.author, accessToken: result.tokens.accessToken,refreshToken: result.tokens.refreshToken },
           "Login successful"
         )
       );
@@ -234,11 +234,11 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const authorId = req.author._id;
 
-  logger.info(`Logout request received for user: ${userId}`);
+  logger.info(`Logout request received for author: ${authorId}`);
 
-  await UserService.logoutUser(userId);
+  await AuthorService.logoutAuthor(authorId);
 
   // Clear the refresh token cookie
   res.clearCookie("refreshToken", {
@@ -247,7 +247,7 @@ const logout = asyncHandler(async (req, res) => {
     sameSite: "strict",
   });
 
-  logger.info(`Refresh token cookie cleared for user: ${userId}`);
+  logger.info(`Refresh token cookie cleared for author: ${authorId}`);
 
   return res
     .status(httpStatus.OK)
@@ -256,11 +256,11 @@ const logout = asyncHandler(async (req, res) => {
 
 
 export {
-  createUser,
-  getAllUsers,
-  getUserById,
-  updateUserById,
-  deleteUserById,
+  createAuthor,
+  getAllAuthors,
+  getAuthorById,
+  updateAuthorById,
+  deleteAuthorById,
   login,
   logout,
 };

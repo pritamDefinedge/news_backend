@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import validator from "validator";
 
-const userSchema = new Schema(
+const authorSchema = new Schema(
   {
     firstName: {
       type: String,
@@ -80,7 +80,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ["author", "admin"],
-      default: "user",
+      default: "author",
     },
     bio: {
       type: String,
@@ -170,15 +170,15 @@ const userSchema = new Schema(
 );
 
 // Virtuals
-userSchema.virtual("fullName").get(function () {
+authorSchema.virtual("fullName").get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
 // Indexes
-userSchema.index({ isActive: 1, isVerified: 1 });
+authorSchema.index({ isActive: 1, isVerified: 1 });
 
 // Middleware
-userSchema.pre("save", async function (next) {
+authorSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
@@ -192,7 +192,7 @@ userSchema.pre("save", async function (next) {
 });
 
 // Instance Methods
-userSchema.methods = {
+authorSchema.methods = {
   generateAccessToken: function () {
     return jwt.sign(
       {
@@ -265,22 +265,22 @@ userSchema.methods = {
 };
 
 // Static Methods
-userSchema.statics.findByCredentials = async function (email, password) {
-  const user = await this.findOne({ email, isActive: true }).select(
+authorSchema.statics.findByCredentials = async function (email, password) {
+  const author = await this.findOne({ email, isActive: true }).select(
     "+password +loginAttempts +lockUntil"
   );
 
-  if (!user || (await user.isAccountLocked())) return null;
+  if (!author || (await author.isAccountLocked())) return null;
 
-  const isMatch = await user.comparePassword(password);
+  const isMatch = await author.comparePassword(password);
   if (!isMatch) {
-    await user.incrementLoginAttempts();
+    await author.incrementLoginAttempts();
     return null;
   }
 
-  await user.resetLoginAttempts();
-  return user;
+  await author.resetLoginAttempts();
+  return author;
 };
 
-const User = mongoose.model("User", userSchema);
-export default User;
+const Author = mongoose.model("Author", authorSchema);
+export default Author;
