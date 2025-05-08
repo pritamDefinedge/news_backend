@@ -79,8 +79,37 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin", "moderator"],
+      enum: ["author", "admin"],
       default: "user",
+    },
+    bio: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: [500, "Bio cannot exceed 500 characters"],
+    },
+    socialLinks: {
+      facebook: {
+        type: String,
+        validate: {
+          validator: validator.isURL,
+          message: "Facebook link must be a valid URL",
+        },
+      },
+      twitter: {
+        type: String,
+        validate: {
+          validator: validator.isURL,
+          message: "Twitter link must be a valid URL",
+        },
+      },
+      instagram: {
+        type: String,
+        validate: {
+          validator: validator.isURL,
+          message: "Instagram link must be a valid URL",
+        },
+      },
     },
     loginHistory: [
       {
@@ -113,6 +142,7 @@ const userSchema = new Schema(
     lastActive: {
       type: Date,
     },
+    
   },
   {
     timestamps: true,

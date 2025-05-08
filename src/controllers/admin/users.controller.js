@@ -40,7 +40,7 @@ const createUser = asyncHandler(async (req, res) => {
       email,
       phone,
       password,
-      role: role || "user",
+      role: role || "author",
       isVerified: isVerified || false,
       isActive: isActive !== false,
     },

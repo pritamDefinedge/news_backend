@@ -30,7 +30,7 @@ const createUser = {
       "string.min": "Password must be at least 8 characters",
       "string.empty": "Password is required",
     }),
-    role: Joi.string().valid("user", "admin", "moderator").default("user"),
+    role: Joi.string().valid("author", "admin", "user").default("author"),
     isVerified: Joi.boolean().default(false),
     isActive: Joi.boolean().default(true),
   }),
