@@ -110,6 +110,13 @@ const authorSchema = new Schema(
           message: "Instagram link must be a valid URL",
         },
       },
+      linkedin: {
+        type: String,
+        validate: {
+          validator: validator.isURL,
+          message: "LinkedIn link must be a valid URL",
+        },
+      },
     },
     loginHistory: [
       {
@@ -142,7 +149,17 @@ const authorSchema = new Schema(
     lastActive: {
       type: Date,
     },
-    
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+    },
+    deletedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "Admin",
+    },
   },
   {
     timestamps: true,

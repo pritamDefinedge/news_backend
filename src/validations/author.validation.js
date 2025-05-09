@@ -74,6 +74,15 @@ const updateAuthorById = {
   }).min(1), // At least one field must be provided
 };
 
+const updateAuthorStatus = {
+  params: Joi.object({
+    id: Joi.string().custom(objectId).required(),
+  }),
+  body: Joi.object({
+    isActive: Joi.boolean().required(),
+  }),
+};
+
 const deleteAuthorById = {
   params: Joi.object({
     id: Joi.string().custom(objectId).required(),
@@ -93,4 +102,4 @@ const loginValidation = {
   }),
 };
 
-export { createAuthor, getAllAuthors, getAuthorById, updateAuthorById, deleteAuthorById,loginValidation };
+export { createAuthor, getAllAuthors, getAuthorById, updateAuthorById, deleteAuthorById,updateAuthorStatus,loginValidation };

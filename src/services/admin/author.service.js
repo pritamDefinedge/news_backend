@@ -68,8 +68,9 @@ const getAllAuthors = async (filters) => {
     search,
     role,
     isActive,
+    isVerified,
     page = 1,
-    limit = 10,
+    limit = 1,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = filters;
@@ -86,6 +87,7 @@ const getAllAuthors = async (filters) => {
 
   if (role) query.role = role;
   if (isActive !== undefined) query.isActive = isActive;
+  if (isVerified !== undefined) query.isVerified = isVerified;
 
   const skip = (page - 1) * limit;
   const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
@@ -190,6 +192,21 @@ const updateAuthorById = async (id, updateData, avatarImg, coverImg) => {
   return updatedAuthor;
 };
 
+const updateAuthorStatus = async (id, isActive) => {
+  const author = await Author.findOne({ _id: id, isDeleted: { $ne: true } });
+  if (!author) throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
+
+  const updatedAuthor = await Author.findByIdAndUpdate(
+    id,
+    { isActive },
+    { new: true }
+  );
+
+  return updatedAuthor;
+};
+
+
+
 /**
  * Soft delete Author
  */
@@ -205,24 +222,7 @@ const deleteAuthorById = async (id) => {
   return deletedAuthor;
 };
 
-const generateTokens = async (author) => {
-  try {
-    const accessToken = author.generateAccessToken();
-    const refreshToken = author.generateRefreshToken();
 
-    // Save refreshToken to Author document
-    author.refreshToken = refreshToken;
-    await author.save({ validateBeforeSave: false });
-
-    return { accessToken, refreshToken };
-  } catch (error) {
-    logger.error(`Token generation failed: ${error.message}`);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to generate tokens"
-    );
-  }
-};
 
 const loginAuthor = async (email, password, deviceInfo, ipAddress) => {
   logger.info(`Login attempt for email: ${email}`);
@@ -311,6 +311,7 @@ export {
   getAuthorById,
   updateAuthorById,
   deleteAuthorById,
+  updateAuthorStatus,
   loginAuthor,
   logoutAuthor,
   

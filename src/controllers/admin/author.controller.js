@@ -5,8 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import httpStatus from "http-status";
 import { validateObjectId } from "../../utils/validateObjectId.js";
 import logger from "../../utils/logger.js";
-import useragent from 'express-useragent';
-
+import useragent from "express-useragent";
 
 /**
  * Create a new AuthorService
@@ -69,7 +68,7 @@ const getAllAuthors = asyncHandler(async (req, res) => {
     isActive,
     isVerified,
     page = 1,
-    limit = 10,
+    limit = 1,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = req.query;
@@ -89,7 +88,9 @@ const getAllAuthors = asyncHandler(async (req, res) => {
 
   return res
     .status(httpStatus.OK)
-    .json(new ApiResponse(httpStatus.OK, author, "Author fetched successfully"));
+    .json(
+      new ApiResponse(httpStatus.OK, author, "Author fetched successfully")
+    );
 });
 
 /**
@@ -116,7 +117,9 @@ const getAuthorById = asyncHandler(async (req, res) => {
 
   return res
     .status(httpStatus.OK)
-    .json(new ApiResponse(httpStatus.OK, author, "Author fetched successfully"));
+    .json(
+      new ApiResponse(httpStatus.OK, author, "Author fetched successfully")
+    );
 });
 
 /**
@@ -159,7 +162,46 @@ const updateAuthorById = asyncHandler(async (req, res) => {
   return res
     .status(httpStatus.OK)
     .json(
-      new ApiResponse(httpStatus.OK, updatedAuthor, "Author updated successfully")
+      new ApiResponse(
+        httpStatus.OK,
+        updatedAuthor,
+        "Author updated successfully"
+      )
+    );
+});
+
+/**
+ * Update author status by ID
+ * @route PATCH /api/v1/admin/author/:id/status
+ * @access Private/Admin
+ */
+
+const updateAuthorStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { isActive } = req.body;
+
+  logger.info(`Updating author status: ${id}`);
+
+  if (!validateObjectId(id)) {
+    logger.warn(`Invalid Author ID: ${id}`);
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Author ID");
+  }
+
+  const updatedAuthor = await AuthorService.updateAuthorStatus(id, isActive);
+
+  if (!updatedAuthor) {
+    logger.warn(`Author not found for status update: ${id}`);
+    throw new ApiError(httpStatus.NOT_FOUND, "Author not found");
+  }
+
+  return res
+    .status(httpStatus.OK)
+    .json(
+      new ApiResponse(
+        httpStatus.OK,
+        updatedAuthor,
+        "Author status updated successfully"
+      )
     );
 });
 
@@ -188,7 +230,11 @@ const deleteAuthorById = asyncHandler(async (req, res) => {
   return res
     .status(httpStatus.OK)
     .json(
-      new ApiResponse(httpStatus.OK, deletedAuthor, "Author deleted successfully")
+      new ApiResponse(
+        httpStatus.OK,
+        deletedAuthor,
+        "Author deleted successfully"
+      )
     );
 });
 
@@ -206,7 +252,12 @@ const login = asyncHandler(async (req, res) => {
   logger.debug(`Device info: ${JSON.stringify(deviceInfo)} | IP: ${ipAddress}`);
 
   try {
-    const result = await AuthorService.loginAuthor(email, password, deviceInfo, ipAddress);
+    const result = await AuthorService.loginAuthor(
+      email,
+      password,
+      deviceInfo,
+      ipAddress
+    );
 
     // Set refreshToken as HTTP-only cookie
     res.cookie("refreshToken", result.tokens.refreshToken, {
@@ -223,7 +274,11 @@ const login = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           httpStatus.OK,
-          { author: result.author, accessToken: result.tokens.accessToken,refreshToken: result.tokens.refreshToken },
+          {
+            author: result.author,
+            accessToken: result.tokens.accessToken,
+            refreshToken: result.tokens.refreshToken,
+          },
           "Login successful"
         )
       );
@@ -232,6 +287,12 @@ const login = asyncHandler(async (req, res) => {
     throw error;
   }
 });
+
+/**
+ * Logout Author
+ * @route POST /api/v1/admin/author/logout
+ * @access Private/Admin
+ */
 
 const logout = asyncHandler(async (req, res) => {
   const authorId = req.author._id;
@@ -254,12 +315,12 @@ const logout = asyncHandler(async (req, res) => {
     .json(new ApiResponse(httpStatus.OK, null, "Logout successful"));
 });
 
-
 export {
   createAuthor,
   getAllAuthors,
   getAuthorById,
   updateAuthorById,
+  updateAuthorStatus,  
   deleteAuthorById,
   login,
   logout,

@@ -16,6 +16,7 @@ const uploadFields = upload.fields([
 // Create Author
 router.post(
   "/",
+  verifyJWT,
   uploadFields,
   validate(authorValidation.createAuthor),
   AuthorController.createAuthor
@@ -24,6 +25,7 @@ router.post(
 // Get all Author
 router.get(
   "/",
+  verifyJWT,
   validate(authorValidation.getAllAuthors),
   AuthorController.getAllAuthors
 );
@@ -31,21 +33,31 @@ router.get(
 // Get Author by ID
 router.get(
   "/:id",
+  verifyJWT,
   validate(authorValidation.getAuthorById),
   AuthorController.getAuthorById
 );
 
 // Update Author
-router.patch(
+router.put(
   "/:id",
+  verifyJWT,
   uploadFields,
   validate(authorValidation.updateAuthorById),
   AuthorController.updateAuthorById
 );
 
+router.put(
+  "/:id/status",
+  verifyJWT,
+  validate(authorValidation.updateAuthorStatus),
+  AuthorController.updateAuthorStatus
+);
+
 // Delete Author
 router.delete(
   "/:id",
+  verifyJWT,
   validate(authorValidation.deleteAuthorById),
   AuthorController.deleteAuthorById
 );
