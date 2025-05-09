@@ -12,10 +12,11 @@ import logger from "../../utils/logger.js";
  * @access Private/Admin
  */
 const createCategory = asyncHandler(async (req, res) => {
-  const { title, order, status } = req.body;
+  const { title, order, isActive } = req.body;
   const image = req.file?.path;
 
-  logger.info(`Creating new category: ${title}`);
+  logger.info(`Creating new category: ${title} `);
+  logger.info(`Creating new isActive: ${isActive} `);
 
   if (!image) {
     logger.warn("Category creation failed: Image is required");
@@ -26,7 +27,7 @@ const createCategory = asyncHandler(async (req, res) => {
     {
       title,
       order: order || 0,
-      status: status || "Active",
+      isActive,
     },
     image
   );
@@ -51,32 +52,56 @@ const createCategory = asyncHandler(async (req, res) => {
  */
 const getAllCategories = asyncHandler(async (req, res) => {
   const {
-    search,
-    status,
+    search = "",  
+    isActive,  
     page = 1,
     limit = 10,
     sortBy = "order",
     sortOrder = "asc",
   } = req.query;
 
+  // Ensure pagination params are parsed as integers
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  // Validate sortOrder
+  if (!["asc", "desc"].includes(sortOrder)) {
+    return res.status(httpStatus.BAD_REQUEST).json(
+      new ApiResponse(httpStatus.BAD_REQUEST, null, "Invalid sort order. Use 'asc' or 'desc'.")
+    );
+  }
+
+  // Validate sortBy field
+  const validSortFields = ["order", "title", "createdAt"]; // Adjust to your valid fields
+  if (!validSortFields.includes(sortBy)) {
+    return res.status(httpStatus.BAD_REQUEST).json(
+      new ApiResponse(httpStatus.BAD_REQUEST, null, `Invalid sort field. Valid fields are: ${validSortFields.join(", ")}`)
+    );
+  }
+
   logger.info(`Fetching categories with filters: ${JSON.stringify(req.query)}`);
 
-  const result = await CategoryService.getAllCategories({
-    search,
-    status,
-    page: parseInt(page),
-    limit: parseInt(limit),
-    sortBy,
-    sortOrder,
-  });
+  try {
+    const result = await CategoryService.getAllCategories({
+      search,
+      isActive,
+      page: parsedPage,
+      limit: parsedLimit,
+      sortBy,
+      sortOrder,
+    });
 
-  logger.info(`Retrieved ${result.categories.length} categories`);
+    logger.info(`Retrieved ${result.categories.length} categories out of ${result.pagination.total}`);
 
-  return res
-    .status(httpStatus.OK)
-    .json(
+    return res.status(httpStatus.OK).json(
       new ApiResponse(httpStatus.OK, result, "Categories fetched successfully")
     );
+  } catch (error) {
+    logger.error(`Error fetching categories: ${error.message}`);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+      new ApiResponse(httpStatus.INTERNAL_SERVER_ERROR, null, "Failed to fetch categories")
+    );
+  }
 });
 
 /**
@@ -117,7 +142,7 @@ const getCategoryById = asyncHandler(async (req, res) => {
  */
 const updateCategoryById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, order, status } = req.body;
+  const { title, order, isActive } = req.body;
   const image = req.file?.path;
 
   logger.info(`Updating category: ${id}`);
@@ -132,7 +157,7 @@ const updateCategoryById = asyncHandler(async (req, res) => {
     {
       title,
       order,
-      status,
+      isActive,
     },
     image
   );

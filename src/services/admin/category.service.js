@@ -11,7 +11,7 @@ import logger from "../../utils/logger.js";
  * @returns {Promise<Object>} Created category
  */
 const createCategory = async (categoryData, imageLocalPath) => {
-  const { title, order = 0, status = "Active" } = categoryData;
+  const { title, order = 0, isActive } = categoryData;
 
   logger.info(`Creating new category: ${title}`);
 
@@ -46,7 +46,7 @@ const createCategory = async (categoryData, imageLocalPath) => {
   const category = await Category.create({
     title,
     order,
-    status,
+    isActive,
     image: imageUrl
   });
 
@@ -61,8 +61,8 @@ const createCategory = async (categoryData, imageLocalPath) => {
  */
 const getAllCategories = async (filters) => {
   const { 
-    search, 
-    status, 
+    search = "", 
+    isActive,  
     page = 1, 
     limit = 10, 
     sortBy = "order", 
@@ -73,7 +73,7 @@ const getAllCategories = async (filters) => {
 
   const query = { isDeleted: { $ne: true } };
 
-  // Apply search filter
+  // Apply search filter if provided
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: 'i' } },
@@ -81,35 +81,37 @@ const getAllCategories = async (filters) => {
     ];
   }
 
-  // Apply status filter
-  if (status) {
-    query.status = status;
-  }
-
-
+  // Apply isActive filter if provided
+  if (isActive !== undefined) query.isActive = isActive;
 
   // Set up pagination
   const skip = (page - 1) * limit;
   const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-  const [categories, total] = await Promise.all([
-    Category.find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit),
-    Category.countDocuments(query)
-  ]);
+  try {
+    const [categories, total] = await Promise.all([
+      Category.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit),
+      Category.countDocuments(query)
+    ]);
 
-  logger.info(`Fetched ${categories.length} of ${total} categories`);
-  return {
-    categories,
-    pagination: {
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      pages: Math.ceil(total / limit)
-    }
-  };
+    logger.info(`Fetched ${categories.length} categories out of ${total} total`);
+
+    return {
+      categories,
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        pages: Math.ceil(total / limit),
+      }
+    };
+  } catch (error) {
+    logger.error(`Error fetching categories: ${error.message}`);
+    throw new Error('Failed to fetch categories');
+  }
 };
 
 /**
@@ -141,7 +143,7 @@ const getCategoryById = async (id) => {
  * @returns {Promise<Object>} Updated category
  */
 const updateCategoryById = async (id, updateData, imageLocalPath) => {
-  const { title, order, status } = updateData;
+  const { title, order, isActive } = updateData;
 
   logger.info(`Updating category: ${id}`);
 
@@ -174,7 +176,7 @@ const updateCategoryById = async (id, updateData, imageLocalPath) => {
   const updateFields = {
     ...(title && { title }),
     ...(order !== undefined && { order }),
-    ...(status && { status })
+    ...(isActive && { isActive })
   };
 
   // Handle image update

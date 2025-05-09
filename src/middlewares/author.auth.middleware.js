@@ -45,15 +45,15 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     throw new ApiError(401, "Unauthorized - Account has been deleted");
   }
 
-  if (author.status === "Blocked") {
-    logger.warn(`Access denied: Blocked author ${author._id}`);
-    throw new ApiError(403, "Forbidden - Account is blocked");
-  }
+  // if (author.isActive === "Blocked") {
+  //   logger.warn(`Access denied: Blocked author ${author._id}`);
+  //   throw new ApiError(403, "Forbidden - Account is blocked");
+  // }
 
-  if (author.status === "Pending") {
-    logger.warn(`Access denied: Pending author ${author._id}`);
-    throw new ApiError(403, "Forbidden - Account is pending verification");
-  }
+  // if (author.status === "Pending") {
+  //   logger.warn(`Access denied: Pending author ${author._id}`);
+  //   throw new ApiError(403, "Forbidden - Account is pending verification");
+  // }
 
   if (typeof author.changedPasswordAfter === "function" && author.changedPasswordAfter(decodedToken.iat)) {
     logger.warn(`Access denied: author ${author._id} changed password after token issuance`);

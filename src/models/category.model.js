@@ -10,7 +10,7 @@ const categorySchema = new Schema(
       required: [true, "Category title is required"],
       trim: true,
       minlength: [2, "Title must be at least 2 characters long"],
-      maxlength: [50, "Title cannot exceed 50 characters"],
+      maxlength: [100, "Title cannot exceed 100 characters"],
       unique: true,
       index: true
     },
@@ -19,18 +19,22 @@ const categorySchema = new Schema(
       unique: true,
       index: true
     },
-
     image: {
       type: String,
       required: [true, "Category image is required"],
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(v);
         },
         message: "Please provide a valid image URL"
       }
     },
-    newsCount: {
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Author",
+      default:null
+    },
+    postCount: {
       type: Number,
       default: 0
     },
@@ -38,21 +42,16 @@ const categorySchema = new Schema(
       type: Number,
       default: 0
     },
-    status: {
-      type: String,
-      enum: {
-        values: ["Active", "Blocked"],
-        message: "Status must be either Active or Blocked"
-      },
-      default: "Active",
-      index: true
+    isActive: {
+      type: Boolean,
+      default: true,
     },
-    isDeleted:{
-      type:Boolean,
-      default:false
+    isDeleted: {
+      type: Boolean,
+      default: false
     }
   },
-  { 
+  {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
@@ -60,17 +59,17 @@ const categorySchema = new Schema(
 );
 
 // Virtual for news in this category
-categorySchema.virtual('news', {
-  ref: 'News',
-  localField: '_id',
-  foreignField: 'category'
+categorySchema.virtual("news", {
+  ref: "News",
+  localField: "_id",
+  foreignField: "category"
 });
 
 // Indexes
-categorySchema.index({ title: 'text', description: 'text' });
+categorySchema.index({ title: "text" }); // Removed 'description' as it's not in the schema
 
 // Pre-save middleware
-categorySchema.pre("save", async function(next) {
+categorySchema.pre("save", async function (next) {
   try {
     // Capitalize title
     if (this.isModified("title")) {
@@ -81,8 +80,8 @@ categorySchema.pre("save", async function(next) {
     if (this.isModified("title")) {
       this.slug = this.title
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
     }
 
     next();
@@ -92,7 +91,7 @@ categorySchema.pre("save", async function(next) {
 });
 
 // Static method to get categories with news count
-categorySchema.statics.getCategoriesWithNewsCount = async function() {
+categorySchema.statics.getCategoriesWithNewsCount = async function () {
   return this.aggregate([
     {
       $lookup: {

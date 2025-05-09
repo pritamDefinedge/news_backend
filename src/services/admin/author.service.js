@@ -18,17 +18,26 @@ const createAuthor = async (authorData, avatarImg, coverImg) => {
 
   logger.info(`Creating new author: ${email}`);
 
-  const existingAuthor = await Author.findOne({
-    $or: [{ email }, { phone }],
+  // Check for existing email
+  const existingEmail = await Author.findOne({
+    email,
     isDeleted: { $ne: true },
   });
-
-  if (existingAuthor) {
-    throw new ApiError(
-      httpStatus.CONFLICT,
-      "Author with this email or phone already exists"
-    );
+  
+  if (existingEmail) {
+    throw new ApiError(httpStatus.CONFLICT, "Author with this email already exists");
   }
+  
+  // Check for existing phone
+  const existingPhone = await Author.findOne({
+    phone,
+    isDeleted: { $ne: true },
+  });
+  
+  if (existingPhone) {
+    throw new ApiError(httpStatus.CONFLICT, "Author with this phone number already exists");
+  }
+  
 
   // Upload avatar and cover image if provided
   let avatarUrl, coverImageUrl;
